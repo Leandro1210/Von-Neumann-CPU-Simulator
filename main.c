@@ -26,11 +26,15 @@ int main()
     memoria[i]=0x00;
   }
   
-  memoria[0] = 0xaa;
-  memoria[1] = 0xab;
-  memoria[2] = 0xef;
-  memoria[3] = 0x0e;
-  memoria[4] = 0x11;
+  memoria[0] = 0x13;//Load A
+  memoria[1] = 0x10;//Posição 16
+  memoria[2] = 0x14;//Load B
+  memoria[3] = 0x12;//Posição 18
+  memoria[4] = 0x02;//Add
+  memoria[5] = 0x15;//Store A
+  memoria[6] = 0x0a;//Posição do store
+  memoria[18] = 0x02;
+  memoria[16] = 0x01;
   //mar = pc
   //mbr = mem[mar] 40
   //mar++
@@ -46,18 +50,6 @@ int main()
   
   do
   { 
-    printf("CPU: \nA: 0x%x\t\tB: 0x%x\t\tT: 0x%x\t\t\nMBR: 0x%x\tMAR: 0x%x\tIMM: 0x%x\t\t\nPC: 0x%x\t\tIR: 0x%x\tLR: 0x%x\t\t\nE: 0x%x\t\tL: 0x%x\t\tG: 0x%x\n\n", a, b, t, mbr, mar, imm, pc, ir, lr, e, l, g);
-    printf("Memoria:\n");
-
-    for (int i = 0; i < 0x99; i++)
-    {
-      printf("%d:0x%x ",i, memoria[i]);  
-    }
-    printf("\n");
-    printf("\n\nAperte uma tecla para iniciar o proximo ciclo, ou Ctrl+C para finalizar\n");
-    getch();
-    i++;
-
     //Buscar
     if (lr == 0)
     {
@@ -72,60 +64,102 @@ int main()
       mar++;
       mbr = mbr <<8;
       mbr = mbr | memoria[mar];
-      mar++;
       //Decodificar
-      ibr = mbr & 0xffff;
+      ibr = mbr & 0xffff; //Palavra da direita salva 
       mbr = mbr >> 16;
-      ir = mbr >>11;
+      ir = mbr >> 11;
       mar = mbr & 0x7ff;
       
     }else if (lr == 1){
-
+      ir = ibr >> 11;
+      mar = ibr & 0x7ff;
     }
 
     //Executar
     if (ir == 0x00)
     {
       //hlt
+      
     }else if( ir == 0x01)
     {
       //nop
+      if (lr == 1)
+      {
+        pc+=4;
+      }else if(lr == 0){
+        lr = 1;
+      }
+      
     }else if( ir == 0x02)
     {
       //add
+      a = a + b;
     }else if( ir == 0x03)
     {
       //sub
+      a = a - b;
     }else if( ir == 0x04)
     {
       //mul
+      a = a * b;
     }else if( ir == 0x05)
     {
       //div
+      a = a / b;
     }else if( ir == 0x06)
     {
       //cmp
+      if (a == b)
+      {
+        e = 1;
+      }else{
+        e = 0;
+      }
+
+      if (a < b)
+      {
+        l = 1;
+      }else{
+        l = 0;
+      }
+      
+      if (a > b)
+      {
+        g = 1;
+      }else{
+        g = 0;
+      }
+      
     }else if( ir == 0x07)
     {
       //xchg
+      t = a;
+      a = b;
+      b = t;
     }else if( ir == 0x08)
     {
       //and
+      a = a & b;
     }else if( ir == 0x09)
     {
       //or
+      a = a | b;
     }else if( ir == 0x0a)
     {
       //xor
+      a = a ^ b;
     }else if( ir == 0x0b)
     {
       //not
+      a = !a;
     }else if( ir == 0x0c)
     {
       //je
+      
     }else if( ir == 0x0d)
     {
       //jne
+
     }else if( ir == 0x0e)
     {
       //jl
@@ -141,24 +175,32 @@ int main()
     }else if( ir == 0x12)
     {
       //jmp
+      pc = memoria[mar];
     }else if( ir == 0x13)
     {
       //lda
+      a = memoria[mar];
     }else if( ir == 0x14)
     {
       //ldb
+      b = memoria[mar];
     }else if( ir == 0x15)
     {
       //sta
+      memoria[mar] = a;
     }else if( ir == 0x16)
     {
-      //stb 
+      //stb
+      memoria[mar] = b; 
     }else if( ir == 0x17)
     {
-      //ldrb 
+      //ldrb
+      a = memoria[b];
     }else if( ir == 0x18)
     {
       //movial imm
+      a = 0;
+
     }else if( ir == 0x19)
     {
       //moviah imm
@@ -181,7 +223,20 @@ int main()
     {
       //rsh imm
     }
-    
-    } while (memoria[i] != 0x00);
+
+    printf("CPU: \nA: 0x%x\t\tB: 0x%x\t\tT: 0x%x\t\t\nMBR: 0x%x\tIBR: 0x%x\tMAR: 0x%x\tIMM: 0x%x\t\t\nPC: 0x%x\t\tIR: 0x%x\t\tLR: 0x%x\t\t\nE: 0x%x\t\tL: 0x%x\t\tG: 0x%x\n\n", a, b, t, mbr, ibr, mar, imm, pc, ir, lr, e, l, g);
+    printf("Memoria:\n");
+
+    for (int i = 0; i < 0x99; i++)
+    {
+      printf("%d:0x%x ",i, memoria[i]);  
+    }
+    printf("\n");
+    printf("\n\nAperte uma tecla para iniciar o proximo ciclo, ou Ctrl+C para finalizar\n");
+    getch();
+    i++;
+    pc +=4;
+
+    } while (mar != 999);
   return 0;
 }
